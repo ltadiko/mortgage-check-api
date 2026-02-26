@@ -1,0 +1,51 @@
+# Maven build output
+/target/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test reports
+/test-output/
+/surefire-reports/
+
+# Java build files
+*.class
+
+# Coverage reports
+/coverage/
+/jacoco/
+
+# Environment files
+.env
+
+# Docker artifacts
+*.pid
+
+# Local configuration
+mortgage-api-local.yml
+
+# Spring Boot devtools
+spring-boot-devtools.properties
+
+# Dependency cache
+/.mvn/
+
+# H2 database files
+*.mv.db
+*.h2.db
+
+# Misc
+*.swp
+*.bak
+*.tmp

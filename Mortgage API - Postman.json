@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "Mortgage API",
+    "description": null,
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Interest Rates",
+      "item": [
+        {
+          "name": "Get All Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{baseurl}}/api/interest-rates",
+              "protocol": "",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "interest-rates"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mortgage Check",
+      "item": [
+        {
+          "name": "Check Feasibility - Rejected (Income)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{baseurl}}/api/mortgage-check",
+              "protocol": "",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "mortgage-check"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"income\": 30000,\n    \"maturityPeriod\": 30,\n    \"loanValue\": 200000,\n    \"homeValue\": 250000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check Feasibility - Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{baseurl}}/api/mortgage-check",
+              "protocol": "",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "mortgage-check"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"income\": 60000,\n    \"maturityPeriod\": 30,\n    \"loanValue\": 200000,\n    \"homeValue\": 250000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Trigger Validation Error (Invalid Data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{baseurl}}/api/mortgage-check",
+              "protocol": "",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "mortgage-check"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"income\": -5000,\n    \"maturityPeriod\": 99,\n    \"loanValue\": 0,\n    \"homeValue\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check Feasibility - Rejected (Lone value)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{baseurl}}/api/mortgage-check",
+              "protocol": "",
+              "host": [
+                "{{baseurl}}"
+              ],
+              "path": [
+                "api",
+                "mortgage-check"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"income\": 80000,\n    \"maturityPeriod\": 30,\n    \"loanValue\": 250001,\n    \"homeValue\": 250000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseurl",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

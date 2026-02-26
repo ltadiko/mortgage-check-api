@@ -1,0 +1,10 @@
+services:
+  mortgage-api:
+    build: .
+    container_name: mortgage-api-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_LIQUIBASE_CONTEXTS=development
+      - LOGGING_LEVEL_COM_MORTGAGE=DEBUG
+    restart: unless-stopped
