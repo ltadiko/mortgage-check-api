@@ -59,6 +59,32 @@ class InterestRateServiceTest {
     }
 
     @Test
+    @DisplayName("Should return rates sorted by maturity period ascending")
+    void shouldReturnRatesSortedByMaturityPeriod() {
+        // Given: repository returns entities in DESCENDING order
+        LocalDateTime now = LocalDateTime.now();
+        InterestRateEntity entity30 = new InterestRateEntity(30, new BigDecimal("4.5"), now);
+        InterestRateEntity entity10 = new InterestRateEntity(10, new BigDecimal("3.0"), now);
+        InterestRateEntity entity20 = new InterestRateEntity(20, new BigDecimal("3.8"), now);
+        when(repository.findAll()).thenReturn(List.of(entity30, entity10, entity20));
+
+        InterestRate rate30 = new InterestRate(30, new BigDecimal("4.5"), now);
+        InterestRate rate10 = new InterestRate(10, new BigDecimal("3.0"), now);
+        InterestRate rate20 = new InterestRate(20, new BigDecimal("3.8"), now);
+        when(mapper.toDomain(entity30)).thenReturn(rate30);
+        when(mapper.toDomain(entity10)).thenReturn(rate10);
+        when(mapper.toDomain(entity20)).thenReturn(rate20);
+
+        // When
+        List<InterestRate> result = service.getCurrentRates();
+
+        // Then: should be sorted ascending by maturity period
+        assertThat(result)
+                .hasSize(3)
+                .containsExactly(rate10, rate20, rate30);
+    }
+
+    @Test
     @DisplayName("Should return empty list when no rates are present")
     void shouldReturnEmptyListWhenNoRates() {
         // Given
