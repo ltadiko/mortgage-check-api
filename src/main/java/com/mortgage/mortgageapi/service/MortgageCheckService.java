@@ -27,36 +27,31 @@ public class MortgageCheckService {
 
     public MortgageCheckResponse checkMortgage(MortgageCheckRequest request) {
 
-        log.info(
-                "Evaluating mortgage request: income={}, loanValue={}, homeValue={}, maturity={}",
-                request.income(),
-                request.loanValue(),
-                request.homeValue(),
-                request.maturityPeriod()
-        );
+        log.info("Mortgage check started: income={}, loanValue={}, homeValue={}, maturityPeriod={}",
+                request.income(), request.loanValue(), request.homeValue(), request.maturityPeriod());
 
-        // 1️⃣ Validate business rules (throws if invalid)
+        // Step 1: Validate business rules (throws if invalid)
         validateLoanConstraints(request);
 
-        // 2️⃣ Retrieve interest rate
+        // Step 2: Retrieve interest rate
         var rate = repository.findByMaturityPeriod(request.maturityPeriod())
                 .map(mapper::toDomain)
                 .orElseThrow(() -> {
-                    log.error("No interest rate found for maturity period={}", request.maturityPeriod());
+                    log.error("Mortgage check failed: no interest rate found for maturityPeriod={}", request.maturityPeriod());
                     return new RateNotFoundException(
                             "No interest rate found for period: " + request.maturityPeriod());
                 });
 
-        // 3️⃣ Calculate monthly costs
+        // Step 3: Calculate monthly costs
         BigDecimal monthlyCosts = amortizationCalculator.calculateMonthlyCosts(
                 request.loanValue(),
                 rate.interestRate(),
                 request.maturityPeriod()
         );
 
-        log.info("Mortgage feasible. Monthly costs calculated: {}", monthlyCosts);
+        log.info("Mortgage check passed: monthlyCosts={}", monthlyCosts);
 
-        // 4️⃣ Build response
+        // Step 4: Build response
         return MortgageCheckResponse.success(monthlyCosts);
     }
 
@@ -84,7 +79,7 @@ public class MortgageCheckService {
         }
 
         if (!violations.isEmpty()) {
-            log.warn("Mortgage request rejected. Violations: {}", violations);
+            log.warn("Mortgage check rejected: violations={}", violations);
             throw new BusinessRuleViolationException(List.copyOf(violations));
         }
     }
