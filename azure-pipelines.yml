@@ -1,0 +1,149 @@
+# ============================================================================
+# Mortgage Check API — CI/CD Pipeline (Azure DevOps)
+# ============================================================================
+# Triggers: Push/PR to main and feature branches
+# Stages: Build & Test → Docker Build & Push
+#
+# Configure the following pipeline variables in Azure DevOps:
+#   Variable Group: "mortgage-api-config"
+#     DOCKER_REGISTRY_URL         - e.g. myregistry.azurecr.io
+#     DOCKER_REGISTRY_USERNAME    - Registry username or service principal appId
+#     DOCKER_REGISTRY_PASSWORD    - Registry password (mark as secret)
+#     DOCKER_IMAGE_NAME           - Image name (default: mortgage-api)
+#     JAVA_VERSION                - Java version (default: 21)
+#
+#   Or use an Azure Container Registry service connection:
+#     dockerRegistryServiceConnection - Name of the Docker service connection
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+      - release/*
+  tags:
+    include:
+      - v*
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  - group: mortgage-api-config
+  - name: javaVersion
+    value: ${{ coalesce(variables['JAVA_VERSION'], '21') }}
+  - name: imageName
+    value: ${{ coalesce(variables['DOCKER_IMAGE_NAME'], 'mortgage-api') }}
+  - name: mavenCacheFolder
+    value: $(HOME)/.m2/repository
+  - name: isMain
+    value: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/main') }}
+  - name: isTag
+    value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # --------------------------------------------------------------------------
+  # Stage 1: Build, Test & Quality
+  # --------------------------------------------------------------------------
+  - stage: BuildAndTest
+    displayName: Build & Test
+    jobs:
+      - job: Build
+        displayName: Build & Run Tests
+        steps:
+          - task: JavaToolInstaller@0
+            displayName: Set up JDK $(javaVersion)
+            inputs:
+              versionSpec: $(javaVersion)
+              jdkArchitectureOption: x64
+              jdkSourceOption: PreInstalled
+
+          - task: Cache@2
+            displayName: Cache Maven dependencies
+            inputs:
+              key: 'maven | "$(Agent.OS)" | pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+              path: $(mavenCacheFolder)
+
+          - task: Maven@4
+            displayName: Build and verify
+            inputs:
+              mavenPomFile: pom.xml
+              goals: clean verify
+              options: --batch-mode --no-transfer-progress
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: JDKVersion
+              jdkVersionOption: '1.$(javaVersion)'
+
+          - task: CopyFiles@2
+            displayName: Stage application JAR
+            inputs:
+              SourceFolder: $(Build.SourcesDirectory)/target
+              Contents: '*.jar'
+              TargetFolder: $(Build.ArtifactStagingDirectory)
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish build artifact
+            inputs:
+              PathtoPublish: $(Build.ArtifactStagingDirectory)
+              ArtifactName: application-jar
+              publishLocation: Container
+
+  # --------------------------------------------------------------------------
+  # Stage 2: Docker Build & Push
+  # --------------------------------------------------------------------------
+  - stage: DockerBuildAndPush
+    displayName: Docker Build & Push
+    dependsOn: BuildAndTest
+    condition: and(succeeded(), or(eq(variables.isMain, true), eq(variables.isTag, true)))
+    jobs:
+      - job: Docker
+        displayName: Build & Push Image
+        steps:
+          - task: Docker@2
+            displayName: Login to container registry
+            inputs:
+              command: login
+              containerRegistry: $(DOCKER_REGISTRY_URL)
+              # If using a service connection instead, replace the above with:
+              # containerRegistry: $(dockerRegistryServiceConnection)
+
+          - task: Docker@2
+            displayName: Build Docker image
+            inputs:
+              command: build
+              Dockerfile: $(Build.SourcesDirectory)/Dockerfile
+              buildContext: $(Build.SourcesDirectory)
+              repository: $(DOCKER_REGISTRY_URL)/$(imageName)
+              tags: |
+                $(Build.BuildId)
+                $(Build.SourceBranchName)
+                latest
+
+          - task: Docker@2
+            displayName: Push Docker image
+            inputs:
+              command: push
+              repository: $(DOCKER_REGISTRY_URL)/$(imageName)
+              tags: |
+                $(Build.BuildId)
+                $(Build.SourceBranchName)
+                latest
+
+          - task: Docker@2
+            displayName: Logout from registry
+            condition: always()
+            inputs:
+              command: logout
+              containerRegistry: $(DOCKER_REGISTRY_URL)

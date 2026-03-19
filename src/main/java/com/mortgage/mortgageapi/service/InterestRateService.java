@@ -6,6 +6,7 @@ import com.mortgage.mortgageapi.repository.InterestRateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -18,6 +19,7 @@ public class InterestRateService {
     public List<InterestRate> getCurrentRates() {
         return interestRateRepository.findAll().stream()
                 .map(interestRateMapper::toDomain)
+                .sorted(Comparator.comparingInt(InterestRate::maturityPeriod))
                 .toList();
     }
 }

@@ -26,6 +26,8 @@ Run `MortgageApplication.java` directly. Ensure your project SDK is set to **Jav
 
 > **💡 Connectivity Note:** If you encounter issues connecting to `localhost` (common with Docker on macOS), use `http://127.0.0.1:8080` instead. This helps bypass potential IPv6 resolution conflicts and Docker host networking quirks on modern development machines.
 
+Once running, open **`http://127.0.0.1:8080`** to access the built-in Thymeleaf UI for interactive mortgage checks.
+
 ---
 
 ## 📋 Assignment Overview
@@ -67,6 +69,18 @@ $$M = P \frac{r(1+r)^n}{(1+r)^n - 1}$$
 * **Observability** — Implemented **Spring AOP** for global logging. Controller entries and exits are automatically traced with execution time (ms) and arguments.
 * **Error Handling** — Centralized via `@RestControllerAdvice` to ensure all business and validation exceptions return a standardized JSON structure.
 * **Security** — The Docker container runs under a dedicated non-root `mortgage` user for enhanced security.
+* **UI** — A lightweight **Thymeleaf** front-end is included at the root path (`/`) for interactive mortgage feasibility checks. It reuses the same service layer as the REST API, keeping business logic in one place.
+
+---
+
+## 🖥 Thymeleaf UI
+
+A built-in web interface is available at **`http://127.0.0.1:8080/`** providing:
+
+* **Mortgage Check Form** — Input income, maturity period, loan amount, and home value. The maturity period dropdown is auto-populated from the database.
+* **Interest Rates Table** — Displays all current rates with last-update timestamps.
+* **Live Results** — Approved mortgages show the monthly cost in a green banner; rejected requests display the specific violation reasons in a red banner.
+* **Quick Links** — Direct navigation to Swagger UI, the Rates API endpoint, and the Actuator health check.
 
 ---
 
@@ -123,6 +137,8 @@ graph LR
 
 ## 📑 API Documentation & Testing
 
+**Thymeleaf UI**: `http://127.0.0.1:8080/`
+
 **Interactive Swagger UI**: `http://127.0.0.1:8080/swagger-ui/index.html`
 
 OpenAPI specification is available at:
@@ -135,11 +151,53 @@ Pre-configured test collections are available in the project root:
 
 ---
 
+## ⚙️ CI/CD Pipelines
+
+Production-ready pipeline configurations are provided for both **GitHub Actions** and **Azure DevOps**.
+
+### Pipeline Stages
+
+| Stage | Description |
+|---|---|
+| **Build & Test** | Compiles the project, runs all unit tests, and publishes test results |
+| **Docker Build & Push** | Builds a multi-arch Docker image and pushes to a configurable container registry |
+
+### GitHub Actions (`.github/workflows/ci-cd.yml`)
+
+**Triggers:** Push to `main`, `develop`, `feature/**`, `release/**`, and version tags (`v*`).
+
+Configure the following in **GitHub → Settings → Secrets and variables**:
+
+| Type | Name | Example |
+|---|---|---|
+| Secret | `DOCKER_REGISTRY_URL` | `ghcr.io`, `myregistry.azurecr.io` |
+| Secret | `DOCKER_REGISTRY_USERNAME` | Registry username or service principal |
+| Secret | `DOCKER_REGISTRY_PASSWORD` | Registry password or token |
+| Variable | `DOCKER_IMAGE_NAME` | `mortgage-api` (optional, default provided) |
+| Variable | `JAVA_VERSION` | `21` (optional, default provided) |
+
+### Azure DevOps (`azure-pipelines.yml`)
+
+**Triggers:** Same branch and tag strategy as GitHub Actions.
+
+Configure a **Variable Group** named `mortgage-api-config` with:
+
+| Variable | Example | Secret? |
+|---|---|---|
+| `DOCKER_REGISTRY_URL` | `myregistry.azurecr.io` | No |
+| `DOCKER_REGISTRY_USERNAME` | Service principal appId | No |
+| `DOCKER_REGISTRY_PASSWORD` | Service principal password | ✅ Yes |
+| `DOCKER_IMAGE_NAME` | `mortgage-api` | No |
+| `JAVA_VERSION` | `21` | No |
+
+> **Docker Push:** Images are pushed **only** on pushes to `main` or version tags (`v*`). Pull requests and feature branches run build and tests only.
+
+---
+
 ## 🚫 Not Implemented & Path to Production (Future Enhancements)
 
 While this MVP is robust, preparing this microservice for a true high-traffic production environment would require a few infrastructure additions. The following features are not included in this MVP, but are recommended for production:
 
-* **CI/CD Pipeline** — No automated continuous integration or deployment pipeline is provided. The project is ready for pipeline integration (e.g., GitHub Actions, GitLab CI), but this is not included in the repository.
 * **Authentication & Authorization** — No authentication or authorization is implemented. All endpoints are open for demonstration purposes. For production use, consider adding API key, OAuth2, or other security mechanisms.
 * **Dedicated Liquibase User & Connection** — The project does not implement a separate database user or connection for Liquibase migrations. In production, it is recommended to use a dedicated user and connection for schema changes to improve security and auditability.
 * **Log Streaming & Custom Logback Configuration** — The project does not implement log streaming or custom logback.xml configuration. For production, consider integrating centralized log management (e.g., ELK, Loki, or cloud logging) and custom logback settings.
