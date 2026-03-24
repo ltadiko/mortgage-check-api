@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mortgage-api
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:mortgagedb}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    contexts: ${SPRING_LIQUIBASE_CONTEXTS:development}
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    properties:
+      jakarta.persistence.schema-generation.database.action: none
+
+
+springdoc:
+  show-actuator: false
+  api-docs:
+    resolve-schema-properties: true
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info

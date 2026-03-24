@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Check</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: #003366;
+        }
+
+        header p {
+            color: #666;
+            margin-top: 0.3rem;
+            font-size: 0.95rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: #003366;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e8ecf1;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 1rem; }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #003366;
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #003366;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn:hover { background: #004a99; }
+
+        /* Rates table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8f9fb;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+
+        /* Result */
+        .result-card {
+            grid-column: 1 / -1;
+        }
+
+        .result-success {
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-left: 4px solid #2e7d32;
+        }
+
+        .result-rejected {
+            background: linear-gradient(135deg, #fce4ec, #fff3e0);
+            border-left: 4px solid #c62828;
+        }
+
+        .result-card h2 {
+            border-bottom-color: transparent;
+        }
+
+        .result-success h2 { color: #2e7d32; }
+        .result-rejected h2 { color: #c62828; }
+
+        .monthly-cost {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2e7d32;
+            margin: 0.5rem 0;
+        }
+
+        .result-detail {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 0.3rem;
+        }
+
+        .error-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .error-list li {
+            padding: 0.4rem 0;
+            color: #c62828;
+            font-size: 0.95rem;
+        }
+
+        .error-list li::before {
+            content: "✗ ";
+            font-weight: bold;
+        }
+
+        /* Links */
+        .links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .links a {
+            color: #003366;
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin: 0 0.8rem;
+        }
+
+        .links a:hover { text-decoration: underline; }
+
+        @media (max-width: 700px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>🏦 Mortgage Feasibility Check</h1>
+        <p>Evaluate your mortgage eligibility and calculate monthly costs</p>
+    </header>
+
+    <!-- Result Banner -->
+    <div class="grid" th:if="${result != null || errors != null}">
+        <div class="card result-card" th:if="${success}" th:classappend="result-success">
+            <h2>✓ Mortgage Approved</h2>
+            <div class="monthly-cost">€ <span th:text="${result.monthlyCosts()}">0.00</span> / month</div>
+            <p class="result-detail" th:text="${result.message()}">Mortgage is feasible.</p>
+        </div>
+
+        <div class="card result-card" th:if="${!success}" th:classappend="result-rejected">
+            <h2>✗ Mortgage Rejected</h2>
+            <ul class="error-list">
+                <li th:each="error : ${errors}" th:text="${error}">Error message</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid" style="margin-top: 1.5rem;">
+
+        <!-- Mortgage Check Form -->
+        <div class="card">
+            <h2>Check Mortgage</h2>
+            <form method="post" action="/check">
+                <div class="form-group">
+                    <label for="income">Annual Income (€)</label>
+                    <input type="number" id="income" name="income" step="1000" min="1"
+                           th:value="${income}" placeholder="e.g. 60000" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="maturityPeriod">Maturity Period (years)</label>
+                    <select id="maturityPeriod" name="maturityPeriod" required>
+                        <option value="" disabled th:selected="${maturityPeriod == null}">Select period</option>
+                        <option th:each="rate : ${rates}"
+                                th:value="${rate.maturityPeriod()}"
+                                th:text="${rate.maturityPeriod() + ' years (' + rate.interestRate() + '%)'}"
+                                th:selected="${maturityPeriod != null && maturityPeriod == rate.maturityPeriod()}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="loanValue">Loan Amount (€)</label>
+                    <input type="number" id="loanValue" name="loanValue" step="1000" min="1"
+                           th:value="${loanValue}" placeholder="e.g. 200000" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="homeValue">Home Value (€)</label>
+                    <input type="number" id="homeValue" name="homeValue" step="1000" min="1"
+                           th:value="${homeValue}" placeholder="e.g. 250000" required>
+                </div>
+
+                <button type="submit" class="btn">Check Feasibility</button>
+            </form>
+        </div>
+
+        <!-- Interest Rates Table -->
+        <div class="card">
+            <h2>Current Interest Rates</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Rate</th>
+                    <th>Last Updated</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rate : ${rates}">
+                    <td th:text="${rate.maturityPeriod() + ' years'}">10 years</td>
+                    <td th:text="${rate.interestRate() + '%'}">3.50%</td>
+                    <td th:text="${#temporals.format(rate.lastUpdate(), 'dd MMM yyyy HH:mm')}">01 Jan 2026 12:00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="links">
+        <a href="/swagger-ui/index.html">📄 Swagger UI</a>
+        <a href="/api/interest-rates">🔗 Rates API</a>
+        <a href="/actuator/health">💚 Health Check</a>
+    </div>
+
+</div>
+
+</body>
+</html>
